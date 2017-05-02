@@ -1,26 +1,22 @@
 package com.packtpub.apps.rxjava_essentials.example3;
 
 
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.Utils;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.Utils;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +27,6 @@ import butterknife.InjectView;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Action;
-import io.reactivex.functions.Consumer;
-import rx.subscriptions.CompositeSubscription;
 
 public class ThirdExampleFragment extends Fragment {
 
