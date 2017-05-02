@@ -2,6 +2,7 @@ build/
 .gradle/
 .idea/
 RxJava-Essentials-Code.iml
+RxJava-Essentials-Code-RxJava2.iml
 app/app.iml
 local.properties
 
