@@ -90,7 +90,6 @@ public class ThirdExampleFragment extends Fragment {
             @Override
             public void onSubscribe(Disposable d) {
                 Utils.logMessage("onSubscribe() in loadList()");
-
             }
 
             @Override
@@ -115,10 +114,30 @@ public class ThirdExampleFragment extends Fragment {
             }
         });
 
-        mTimeDisposable = Observable.interval(3, 3, TimeUnit.SECONDS)
-                .subscribe(aLong -> Utils.logMessage("onNext() of interval : " + aLong),
-                        throwable -> Utils.logMessage("onError() of interval"),
-                        () -> Utils.logMessage("onComplete() of interval"));
+        Observable.interval(3, 3, TimeUnit.SECONDS)
+                .subscribe(new Observer<Long>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        Utils.logMessage("onSubscribe() of interval : " + d.toString());
+                        mTimeDisposable = d;
+                    }
+
+                    @Override
+                    public void onNext(Long value) {
+                        Utils.logMessage("onNext() of interval : " + value);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Utils.logMessage("onError() of interval");
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Utils.logMessage("onComplete() of interval");
+                    }
+                });
+
     }
 
     @Override
