@@ -1,11 +1,6 @@
 package com.packtpub.apps.rxjava_essentials.example2;
 
 
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,14 +12,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.Utils;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 public class SecondExampleFragment extends Fragment {
 
@@ -73,24 +74,32 @@ public class SecondExampleFragment extends Fragment {
     private void loadList(List<AppInfo> apps) {
         mRecyclerView.setVisibility(View.VISIBLE);
 
-        Observable.from(apps)
+        Observable.fromIterable(apps)
                 .subscribe(new Observer<AppInfo>() {
                     @Override
-                    public void onCompleted() {
-                        mSwipeRefreshLayout.setRefreshing(false);
-                        Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
+                    public void onSubscribe(Disposable d) {
+                        Utils.logCurrentThread("onSubscribe() in loadList()");
+                    }
+
+                    @Override
+                    public void onNext(AppInfo appInfo) {
+                        Utils.logCurrentThread("onNext() in loadList() - " + appInfo.getName());
+                        mAddedApps.add(appInfo);
+                        mAdapter.addApplication(mAddedApps.size() - 1, appInfo);
                     }
 
                     @Override
                     public void onError(Throwable e) {
+                        Utils.logCurrentThread("onError() in loadList()");
                         Toast.makeText(getActivity(), "Something went wrong!", Toast.LENGTH_SHORT).show();
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
 
                     @Override
-                    public void onNext(AppInfo appInfo) {
-                        mAddedApps.add(appInfo);
-                        mAdapter.addApplication(mAddedApps.size() - 1, appInfo);
+                    public void onComplete() {
+                        Utils.logCurrentThread("onComplete() in loadList()");
+                        mSwipeRefreshLayout.setRefreshing(false);
+                        Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
                     }
                 });
     }
