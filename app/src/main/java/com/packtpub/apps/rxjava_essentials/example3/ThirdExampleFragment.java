@@ -2,6 +2,7 @@ package com.packtpub.apps.rxjava_essentials.example3;
 
 
 import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.Utils;
 import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
 import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
 import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
@@ -18,15 +19,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-import rx.Subscription;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
+import rx.subscriptions.CompositeSubscription;
 
 public class ThirdExampleFragment extends Fragment {
 
@@ -40,7 +47,7 @@ public class ThirdExampleFragment extends Fragment {
 
     private ArrayList<AppInfo> mAddedApps = new ArrayList<>();
 
-    private Subscription mTimeSubscription;
+    private Disposable mTimeDisposable;
 
     public ThirdExampleFragment() {
     }
@@ -88,47 +95,45 @@ public class ThirdExampleFragment extends Fragment {
 
         threeOfThem.subscribe(new Observer<AppInfo>() {
             @Override
-            public void onCompleted() {
+            public void onSubscribe(Disposable d) {
+                Utils.logMessage("onSubscribe() in loadList()");
+
+            }
+
+            @Override
+            public void onComplete() {
+                Utils.logMessage("onComplete() in loadList()");
                 mSwipeRefreshLayout.setRefreshing(false);
                 Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onError(Throwable e) {
+                Utils.logMessage("onError() in loadList()");
                 Toast.makeText(getActivity(), "Something went wrong!", Toast.LENGTH_SHORT).show();
                 mSwipeRefreshLayout.setRefreshing(false);
             }
 
             @Override
             public void onNext(AppInfo appInfo) {
+                Utils.logMessage("onNext() in loadList() - " + appInfo.getName());
                 mAddedApps.add(appInfo);
                 mAdapter.addApplication(mAddedApps.size() - 1, appInfo);
             }
         });
 
-        mTimeSubscription = Observable.timer(3, 3, TimeUnit.SECONDS)
-                .subscribe(new Observer<Long>() {
-                    @Override
-                    public void onCompleted() {
-
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                    }
-
-                    @Override
-                    public void onNext(Long number) {
-                        Log.d("RXJAVA", "I say " + number);
-                    }
-                });
+        mTimeDisposable = Observable.interval(3, 3, TimeUnit.SECONDS)
+                .subscribe(aLong -> Utils.logMessage("onNext() of interval : " + aLong),
+                        throwable -> Utils.logMessage("onError() of interval"),
+                        () -> Utils.logMessage("onComplete() of interval"));
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (!mTimeSubscription.isUnsubscribed()) {
-            mTimeSubscription.unsubscribe();
+        Utils.logMessage("mTimeDisposable.isDisposed() ? " + mTimeDisposable.isDisposed());
+        if (!mTimeDisposable.isDisposed()) {
+            mTimeDisposable.dispose();
         }
     }
 }
