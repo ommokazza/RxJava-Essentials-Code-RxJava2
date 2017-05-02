@@ -1,0 +1,7 @@
+build/
+.gradle/
+.idea/
+RxJava-Essentials-Code.iml
+app/app.iml
+local.properties
+
