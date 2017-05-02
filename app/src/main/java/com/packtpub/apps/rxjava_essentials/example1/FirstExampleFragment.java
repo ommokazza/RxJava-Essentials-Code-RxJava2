@@ -33,8 +33,12 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
 import io.reactivex.SingleObserver;
+import io.reactivex.SingleOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -156,9 +160,16 @@ public class FirstExampleFragment extends Fragment {
                 Utils.storeBitmap(App.instance, icon, name);
 
                 subscriber.onNext(new AppInfo(name, iconPath, appInfo.getLastUpdateTime()));
+                if (subscriber.isDisposed()) {
+                    Utils.logCurrentThread("subscriber.isDisposed() : true");
+                    return ;
+                }
             }
-            subscriber.onComplete();
-            Utils.logCurrentThread("ObservableOnSubscribe in getApps() End");
+            Utils.logCurrentThread("Check subscriber.isDisposed() before calling onComplte() : " + subscriber.isDisposed());
+            if (!subscriber.isDisposed()) {
+                subscriber.onComplete();
+                Utils.logCurrentThread("ObservableOnSubscribe in getApps() End");
+            }
         });
     }
 
