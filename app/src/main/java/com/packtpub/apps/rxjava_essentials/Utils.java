@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,6 +14,8 @@ import java.io.IOException;
 import rx.schedulers.Schedulers;
 
 public class Utils {
+
+    private static final boolean DEBUG = true;
 
     public static Bitmap drawableToBitmap(Drawable drawable) {
         if (drawable instanceof BitmapDrawable) {
@@ -51,4 +55,21 @@ public class Utils {
             }
         }
     }
+
+    public static void logCurrentThread(String msg) {
+        if (DEBUG) {
+            printLog((msg == null ? "" : msg) + " / " + Thread.currentThread().getName());
+        }
+    }
+
+    public static void logMessage(String msg) {
+        if (DEBUG) {
+            Log.d("MyLog", msg == null ? "" : msg);
+        }
+    }
+
+    private static void printLog(@NonNull String msg) {
+        Log.d("MyLog", msg);
+    }
+
 }

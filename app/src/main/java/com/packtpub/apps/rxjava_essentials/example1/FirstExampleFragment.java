@@ -1,16 +1,5 @@
 package com.packtpub.apps.rxjava_essentials.example1;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import com.packtpub.apps.rxjava_essentials.App;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.Utils;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfoRich;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
@@ -27,6 +16,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.packtpub.apps.rxjava_essentials.App;
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.Utils;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfoRich;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -34,10 +33,11 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.Observable;
+import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class FirstExampleFragment extends Fragment {
 
@@ -82,6 +82,7 @@ public class FirstExampleFragment extends Fragment {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(file -> {
+                    Utils.logCurrentThread("getFileDir() subscribe");
                     mFilesDir = file;
                     refreshTheList();
                 });
@@ -89,33 +90,38 @@ public class FirstExampleFragment extends Fragment {
 
     private Observable<File> getFileDir() {
         return Observable.create(subscriber -> {
+            Utils.logCurrentThread("Observable.create() in getFileDir()");
             subscriber.onNext(App.instance.getFilesDir());
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 
     private void refreshTheList() {
         getApps()
                 .toSortedList()
-                .subscribe(new Observer<List<AppInfo>>() {
+                .subscribe(new SingleObserver<List<AppInfo>>() {
                     @Override
-                    public void onCompleted() {
+                    public void onSubscribe(Disposable d) {
+                        Utils.logMessage("onSubscribe() in refeshTheList()");
+                    }
+
+                    @Override
+                    public void onSuccess(List<AppInfo> appInfos) {
+                        Utils.logMessage("onSuccess() in refeshTheList()");
+                        mRecyclerView.setVisibility(View.VISIBLE);
+                        mAdapter.addApplications(appInfos);
+                        mSwipeRefreshLayout.setRefreshing(false);
+                        storeList(appInfos);
                         Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
+                        Utils.logMessage("onError() in refeshTheList()");
                         Toast.makeText(getActivity(), "Something went wrong!", Toast.LENGTH_SHORT).show();
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
 
-                    @Override
-                    public void onNext(List<AppInfo> appInfos) {
-                        mRecyclerView.setVisibility(View.VISIBLE);
-                        mAdapter.addApplications(appInfos);
-                        mSwipeRefreshLayout.setRefreshing(false);
-                        storeList(appInfos);
-                    }
                 });
     }
 
@@ -132,6 +138,7 @@ public class FirstExampleFragment extends Fragment {
 
     private Observable<AppInfo> getApps() {
         return Observable.create(subscriber -> {
+            Utils.logCurrentThread("ObservableOnSubscribe in getApps() Start");
             List<AppInfoRich> apps = new ArrayList<>();
 
             final Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
@@ -148,14 +155,10 @@ public class FirstExampleFragment extends Fragment {
                 String iconPath = mFilesDir + "/" + name;
                 Utils.storeBitmap(App.instance, icon, name);
 
-                if (subscriber.isUnsubscribed()) {
-                    return;
-                }
                 subscriber.onNext(new AppInfo(name, iconPath, appInfo.getLastUpdateTime()));
             }
-            if (!subscriber.isUnsubscribed()) {
-                subscriber.onCompleted();
-            }
+            subscriber.onComplete();
+            Utils.logCurrentThread("ObservableOnSubscribe in getApps() End");
         });
     }
 
