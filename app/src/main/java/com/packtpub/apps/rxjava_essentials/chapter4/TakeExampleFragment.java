@@ -1,11 +1,6 @@
 package com.packtpub.apps.rxjava_essentials.chapter4;
 
 
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,13 +12,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 
 public class TakeExampleFragment extends Fragment {
@@ -73,11 +74,16 @@ public class TakeExampleFragment extends Fragment {
     private void loadList(List<AppInfo> apps) {
         mRecyclerView.setVisibility(View.VISIBLE);
 
-        Observable.from(apps)
+        Observable.fromIterable(apps)
                 .take(3)
+//                .takeLast(3)
                 .subscribe(new Observer<AppInfo>() {
                     @Override
-                    public void onCompleted() {
+                    public void onSubscribe(Disposable d) {
+                    }
+
+                    @Override
+                    public void onComplete() {
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
 

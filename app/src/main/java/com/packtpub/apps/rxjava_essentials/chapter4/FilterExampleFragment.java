@@ -1,11 +1,6 @@
 package com.packtpub.apps.rxjava_essentials.chapter4;
 
 
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,14 +12,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 public class FilterExampleFragment extends Fragment {
 
@@ -73,12 +73,19 @@ public class FilterExampleFragment extends Fragment {
     private void loadList(List<AppInfo> apps) {
         mRecyclerView.setVisibility(View.VISIBLE);
 
-        Observable.from(apps)
+        Observable.fromIterable(apps)
                 .filter((appInfo) -> appInfo.getName().startsWith("C"))
+//                .filter(v -> v != null)
                 .subscribe(new Observer<AppInfo>() {
                     @Override
-                    public void onCompleted() {
-                        mSwipeRefreshLayout.setRefreshing(false);
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(AppInfo appInfo) {
+                        mAddedApps.add(appInfo);
+                        mAdapter.addApplication(mAddedApps.size() - 1, appInfo);
                     }
 
                     @Override
@@ -88,9 +95,8 @@ public class FilterExampleFragment extends Fragment {
                     }
 
                     @Override
-                    public void onNext(AppInfo appInfo) {
-                        mAddedApps.add(appInfo);
-                        mAdapter.addApplication(mAddedApps.size() - 1, appInfo);
+                    public void onComplete() {
+                        mSwipeRefreshLayout.setRefreshing(false);
                     }
                 });
     }
