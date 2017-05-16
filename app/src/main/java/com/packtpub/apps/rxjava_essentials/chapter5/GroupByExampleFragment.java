@@ -1,11 +1,6 @@
 package com.packtpub.apps.rxjava_essentials.chapter5;
 
 
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,17 +12,24 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.Utils;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-import rx.functions.Func1;
-import rx.observables.GroupedObservable;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observables.GroupedObservable;
 
 
 public class GroupByExampleFragment extends Fragment {
@@ -77,27 +79,31 @@ public class GroupByExampleFragment extends Fragment {
     private void loadList(List<AppInfo> apps) {
         mRecyclerView.setVisibility(View.VISIBLE);
 
-        Observable<GroupedObservable<String, AppInfo>> groupedItems = Observable.from(apps)
-                .groupBy(new Func1<AppInfo, String>() {
-                    @Override
-                    public String call(AppInfo appInfo) {
-                        SimpleDateFormat formatter = new SimpleDateFormat("MM/yyyy");
-                        return formatter.format(new Date(appInfo.getLastUpdateTime()));
-                    }
+        Observable<GroupedObservable<String, AppInfo>> groupedItems = Observable.fromIterable(apps)
+                .groupBy(appInfo -> {
+                    SimpleDateFormat formatter = new SimpleDateFormat("MM/yyyy", Locale.US);
+                    String group = formatter.format(new Date(appInfo.getLastUpdateTime()));
+                    Utils.logMessage("groupBy() : " + appInfo.getName() + " - " + group);
+                    return group;
                 });
 
         Observable
                 .concat(groupedItems)
                 .subscribe(new Observer<AppInfo>() {
                     @Override
-                    public void onCompleted() {
+                    public void onError(Throwable e) {
+                        Toast.makeText(getActivity(), "Something went south!", Toast.LENGTH_SHORT).show();
                         mSwipeRefreshLayout.setRefreshing(false);
                     }
 
                     @Override
-                    public void onError(Throwable e) {
-                        Toast.makeText(getActivity(), "Something went south!", Toast.LENGTH_SHORT).show();
+                    public void onComplete() {
                         mSwipeRefreshLayout.setRefreshing(false);
+                    }
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
                     }
 
                     @Override

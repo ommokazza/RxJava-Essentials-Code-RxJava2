@@ -1,10 +1,5 @@
 package com.packtpub.apps.rxjava_essentials.chapter5;
 
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -16,14 +11,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-import rx.functions.Func1;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 public class MapExampleFragment extends Fragment {
 
@@ -72,20 +72,22 @@ public class MapExampleFragment extends Fragment {
     private void loadList(List<AppInfo> apps) {
         mRecyclerView.setVisibility(View.VISIBLE);
 
-        Observable.from(apps)
-                .map(new Func1<AppInfo, AppInfo>() {
-                    @Override
-                    public AppInfo call(AppInfo appInfo) {
-                        String currentName = appInfo.getName();
-                        String lowerCaseName = currentName.toLowerCase();
-                        appInfo.setName(lowerCaseName);
-                        return appInfo;
-                    }
+        Observable.fromIterable(apps)
+                .map(appInfo -> {
+                    String currentName = appInfo.getName();
+                    String lowerCaseName = currentName.toLowerCase();
+                    appInfo.setName(lowerCaseName);
+                    return appInfo;
                 })
                 .subscribe(new Observer<AppInfo>() {
                     @Override
-                    public void onCompleted() {
-                        mSwipeRefreshLayout.setRefreshing(false);
+                    public void onSubscribe(Disposable d) {
+                    }
+
+                    @Override
+                    public void onNext(AppInfo appInfo) {
+                        mAddedApps.add(appInfo);
+                        mAdapter.addApplication(mAddedApps.size() - 1, appInfo);
                     }
 
                     @Override
@@ -95,9 +97,8 @@ public class MapExampleFragment extends Fragment {
                     }
 
                     @Override
-                    public void onNext(AppInfo appInfo) {
-                        mAddedApps.add(appInfo);
-                        mAdapter.addApplication(mAddedApps.size() - 1, appInfo);
+                    public void onComplete() {
+                        mSwipeRefreshLayout.setRefreshing(false);
                     }
                 });
     }
