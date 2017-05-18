@@ -1,12 +1,5 @@
 package com.packtpub.apps.rxjava_essentials.chapter7;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-
 import android.app.Fragment;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -20,16 +13,26 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class SharedPreferencesListFragment extends Fragment {
 
@@ -76,12 +79,15 @@ public class SharedPreferencesListFragment extends Fragment {
         mRecyclerView.setVisibility(View.VISIBLE);
 
         getApps()
-                .onBackpressureBuffer()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<AppInfo>() {
+                .subscribe(new Subscriber<AppInfo>() {
                     @Override
-                    public void onCompleted() {
+                    public void onSubscribe(Subscription s) {
+                    }
+
+                    @Override
+                    public void onComplete() {
                         mSwipeRefreshLayout.setRefreshing(false);
                         Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
                     }
@@ -100,9 +106,9 @@ public class SharedPreferencesListFragment extends Fragment {
                 });
     }
 
-    private Observable<AppInfo> getApps() {
-        return Observable
-                .create(subscriber -> {
+    private Flowable<AppInfo> getApps() {
+        return Flowable
+                .create((FlowableEmitter<AppInfo> subscriber) -> {
                     List<AppInfo> apps = new ArrayList<>();
 
                     SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
@@ -116,7 +122,7 @@ public class SharedPreferencesListFragment extends Fragment {
                     for (AppInfo app : apps) {
                         subscriber.onNext(app);
                     }
-                    subscriber.onCompleted();
-                });
+                    subscriber.onComplete();
+                }, BackpressureStrategy.BUFFER);
     }
 }
