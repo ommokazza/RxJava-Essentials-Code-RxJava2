@@ -11,7 +11,7 @@ import android.util.Log;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import rx.schedulers.Schedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class Utils {
 
@@ -31,9 +31,7 @@ public class Utils {
     }
 
     public static void storeBitmap(Context context, Bitmap bitmap, String filename) {
-        Schedulers.io().createWorker().schedule(() -> {
-            blockingStoreBitmap(context, bitmap, filename);
-        });
+        Schedulers.io().createWorker().schedule(() -> blockingStoreBitmap(context, bitmap, filename));
     }
 
     private static void blockingStoreBitmap(Context context, Bitmap bitmap, String filename) {
