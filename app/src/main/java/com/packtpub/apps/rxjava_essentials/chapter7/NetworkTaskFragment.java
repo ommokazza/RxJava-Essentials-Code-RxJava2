@@ -1,18 +1,19 @@
 package com.packtpub.apps.rxjava_essentials.chapter7;
 
-import com.github.lzyzsd.circleprogress.ArcProgress;
-import com.packtpub.apps.rxjava_essentials.App;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.rey.material.widget.Button;
-
 import android.app.Fragment;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import com.github.lzyzsd.circleprogress.ArcProgress;
+import com.packtpub.apps.rxjava_essentials.App;
+import com.packtpub.apps.rxjava_essentials.R;
+import com.rey.material.widget.Button;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,11 +26,12 @@ import java.net.URL;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
-import rx.Observable;
-import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subjects.PublishSubject;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.PublishSubject;
 
 public class NetworkTaskFragment extends Fragment {
 
@@ -62,7 +64,11 @@ public class NetworkTaskFragment extends Fragment {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Integer>() {
                     @Override
-                    public void onCompleted() {
+                    public void onSubscribe(Disposable d) {
+                    }
+
+                    @Override
+                    public void onComplete() {
                         App.L.debug("Completed");
                     }
 
@@ -77,7 +83,7 @@ public class NetworkTaskFragment extends Fragment {
                     }
                 });
 
-        String destination = "/sdcard/softboy.avi";
+        String destination = Environment.getExternalStorageDirectory().getPath()+"/softboy.avi";
 
         obserbableDownload("http://archive.blender.org/fileadmin/movies/softboy.avi", destination)
                 .subscribeOn(Schedulers.io())
@@ -107,7 +113,7 @@ public class NetworkTaskFragment extends Fragment {
                 boolean result = downloadFile(source, destination);
                 if (result) {
                     subscriber.onNext(true);
-                    subscriber.onCompleted();
+                    subscriber.onComplete();
                 } else {
                     subscriber.onError(new Throwable("Download failed."));
                 }
@@ -148,7 +154,7 @@ public class NetworkTaskFragment extends Fragment {
                 }
                 output.write(data, 0, count);
             }
-            mDownloadProgress.onCompleted();
+            mDownloadProgress.onComplete();
             result = true;
         } catch (Exception e) {
             mDownloadProgress.onError(e);
@@ -166,7 +172,7 @@ public class NetworkTaskFragment extends Fragment {
 
             if (connection != null) {
                 connection.disconnect();
-                mDownloadProgress.onCompleted();
+                mDownloadProgress.onComplete();
             }
         }
         return result;

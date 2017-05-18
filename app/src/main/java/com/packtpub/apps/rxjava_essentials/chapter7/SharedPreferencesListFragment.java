@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.Utils;
 import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
 import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
 
@@ -84,6 +85,8 @@ public class SharedPreferencesListFragment extends Fragment {
                 .subscribe(new Subscriber<AppInfo>() {
                     @Override
                     public void onSubscribe(Subscription s) {
+                        Utils.logCurrentThread("onSubscribe()");    // this is on main thread
+                        s.request(Long.MAX_VALUE);
                     }
 
                     @Override
@@ -109,6 +112,7 @@ public class SharedPreferencesListFragment extends Fragment {
     private Flowable<AppInfo> getApps() {
         return Flowable
                 .create((FlowableEmitter<AppInfo> subscriber) -> {
+                    Utils.logCurrentThread("subscribe()");  // this is subscribe thread. i.e IO thread
                     List<AppInfo> apps = new ArrayList<>();
 
                     SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);

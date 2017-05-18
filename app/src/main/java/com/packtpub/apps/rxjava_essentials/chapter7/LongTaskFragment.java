@@ -1,11 +1,6 @@
 package com.packtpub.apps.rxjava_essentials.chapter7;
 
 
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,15 +12,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.Utils;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 
 public class LongTaskFragment extends Fragment {
@@ -75,13 +80,17 @@ public class LongTaskFragment extends Fragment {
     private void loadList(List<AppInfo> apps) {
         mRecyclerView.setVisibility(View.VISIBLE);
 
-        getObservableApps(apps)
-                .onBackpressureBuffer()
+        getFlowableApps(apps)
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<AppInfo>() {
+                .subscribe(new Subscriber<AppInfo>() {
                     @Override
-                    public void onCompleted() {
+                    public void onSubscribe(Subscription s) {
+                        s.request(Long.MAX_VALUE);
+                    }
+
+                    @Override
+                    public void onComplete() {
                         mSwipeRefreshLayout.setRefreshing(false);
                         Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
                     }
@@ -102,17 +111,21 @@ public class LongTaskFragment extends Fragment {
                 });
     }
 
-    private Observable<AppInfo> getObservableApps(List<AppInfo> apps) {
-        return Observable
-                .create(subscriber -> {
-                    for (double i = 0; i < 1000000000; i++) {
+    private Flowable<AppInfo> getFlowableApps(List<AppInfo> apps) {
+        return Flowable
+                .create((FlowableEmitter<AppInfo> subscriber) -> {
+                    for (double i = 0; i < 100000000; i++) {
+                        if (i % 10000000 == 0) {
+                            Utils.logMessage("" + (int) i);
+                        }
                         double y = i * i;
                     }
+                    Utils.logMessage("waiting is over");
 
                     for (AppInfo app : apps) {
                         subscriber.onNext(app);
                     }
-                    subscriber.onCompleted();
-                });
+                    subscriber.onComplete();
+                }, BackpressureStrategy.BUFFER);
     }
 }
