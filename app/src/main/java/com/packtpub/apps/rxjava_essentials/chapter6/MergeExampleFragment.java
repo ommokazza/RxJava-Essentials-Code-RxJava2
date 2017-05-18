@@ -1,13 +1,6 @@
 package com.packtpub.apps.rxjava_essentials.chapter6;
 
 
-import com.google.common.collect.Lists;
-
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -19,13 +12,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.google.common.collect.Lists;
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 
 public class MergeExampleFragment extends Fragment {
@@ -75,16 +75,20 @@ public class MergeExampleFragment extends Fragment {
     private void loadList(List<AppInfo> apps) {
         mRecyclerView.setVisibility(View.VISIBLE);
 
-        List reversedApps = Lists.reverse(apps);
+        List<AppInfo> reversedApps = Lists.reverse(apps);
 
-        Observable<AppInfo> observableApps = Observable.from(apps);
-        Observable<AppInfo> observableReversedApps = Observable.from(reversedApps);
+        Observable<AppInfo> observableApps = Observable.fromIterable(apps);
+        Observable<AppInfo> observableReversedApps = Observable.fromIterable(reversedApps);
 
         Observable<AppInfo> mergedObserbable = Observable.merge(observableApps, observableReversedApps);
 
         mergedObserbable.subscribe(new Observer<AppInfo>() {
             @Override
-            public void onCompleted() {
+            public void onSubscribe(Disposable d) {
+            }
+
+            @Override
+            public void onComplete() {
                 mSwipeRefreshLayout.setRefreshing(false);
                 Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
             }

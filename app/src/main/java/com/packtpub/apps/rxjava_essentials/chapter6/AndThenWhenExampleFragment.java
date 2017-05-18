@@ -1,11 +1,6 @@
 package com.packtpub.apps.rxjava_essentials.chapter6;
 
 
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
-import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,19 +12,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.apps.AppInfo;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationAdapter;
+import com.packtpub.apps.rxjava_essentials.apps.ApplicationsList;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.joins.Pattern2;
-import rx.joins.Plan0;
-import rx.observables.JoinObservable;
-
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 
 public class AndThenWhenExampleFragment extends Fragment {
 
@@ -78,10 +75,14 @@ public class AndThenWhenExampleFragment extends Fragment {
     private void loadList(List<AppInfo> apps) {
         mRecyclerView.setVisibility(View.VISIBLE);
 
-        Observable<AppInfo> observableApp = Observable.from(apps);
+        Observable<AppInfo> observableApp = Observable.fromIterable(apps);
 
         Observable<Long> tictoc = Observable.interval(1, TimeUnit.SECONDS);
 
+        // It's enough use zip() operation.
+        // Because it takes 2 or more observable as input sources now.
+
+        /*
         Pattern2<AppInfo, Long> pattern = JoinObservable.from(observableApp).and(tictoc);
         Plan0<AppInfo> plan = pattern.then(this::updateTitle);
         JoinObservable
@@ -90,7 +91,49 @@ public class AndThenWhenExampleFragment extends Fragment {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<AppInfo>() {
                     @Override
-                    public void onCompleted() {
+                    public void onSubscribe(Disposable d) {
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        mSwipeRefreshLayout.setRefreshing(false);
+                        Toast.makeText(getActivity(), "Something went wrong!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onNext(AppInfo appInfo) {
+                        if (mSwipeRefreshLayout.isRefreshing()) {
+                            mSwipeRefreshLayout.setRefreshing(false);
+                        }
+                        mAddedApps.add(appInfo);
+                        int position = mAddedApps.size() - 1;
+                        mAdapter.addApplication(position, appInfo);
+                        mRecyclerView.smoothScrollToPosition(position);
+                    }
+                });
+        */
+
+        Observable<String> alphabet = Observable.interval(1, TimeUnit.SECONDS)
+                .map(aLong -> {
+                    char c = (char) (aLong + 'A');
+                    return String.valueOf(c);
+                });
+
+        Observable
+                .zip(observableApp, tictoc, alphabet, this::updateTitle)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<AppInfo>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                    }
+
+                    @Override
+                    public void onComplete() {
                         Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
                     }
 
@@ -113,8 +156,8 @@ public class AndThenWhenExampleFragment extends Fragment {
                 });
     }
 
-    private AppInfo updateTitle(AppInfo appInfo, Long time) {
-        appInfo.setName(time + " " + appInfo.getName());
+    private AppInfo updateTitle(AppInfo appInfo, Long time, String alphabet) {
+        appInfo.setName(alphabet + " " + time + " " + appInfo.getName());
         return appInfo;
     }
 }
