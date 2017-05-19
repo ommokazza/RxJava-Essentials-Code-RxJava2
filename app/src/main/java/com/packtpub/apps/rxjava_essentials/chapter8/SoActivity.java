@@ -1,9 +1,5 @@
 package com.packtpub.apps.rxjava_essentials.chapter8;
 
-import com.packtpub.apps.rxjava_essentials.App;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.chapter8.api.stackexchange.SeApiManager;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,6 +10,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+
+import com.packtpub.apps.rxjava_essentials.App;
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.chapter8.api.stackexchange.SeApiManager;
 
 import java.util.ArrayList;
 

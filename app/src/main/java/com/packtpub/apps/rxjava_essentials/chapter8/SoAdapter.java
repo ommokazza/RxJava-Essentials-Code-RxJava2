@@ -1,14 +1,5 @@
 package com.packtpub.apps.rxjava_essentials.chapter8;
 
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
-import com.packtpub.apps.rxjava_essentials.App;
-import com.packtpub.apps.rxjava_essentials.R;
-import com.packtpub.apps.rxjava_essentials.chapter8.api.openweathermap.OpenWeatherMapApiManager;
-import com.packtpub.apps.rxjava_essentials.chapter8.api.openweathermap.models.WeatherResponse;
-import com.packtpub.apps.rxjava_essentials.chapter8.api.stackexchange.models.User;
-
 import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -17,18 +8,29 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
+import com.packtpub.apps.rxjava_essentials.App;
+import com.packtpub.apps.rxjava_essentials.R;
+import com.packtpub.apps.rxjava_essentials.Utils;
+import com.packtpub.apps.rxjava_essentials.chapter8.api.openweathermap.OpenWeatherMapApiManager;
+import com.packtpub.apps.rxjava_essentials.chapter8.api.openweathermap.models.WeatherResponse;
+import com.packtpub.apps.rxjava_essentials.chapter8.api.stackexchange.models.User;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import rx.Observable;
-import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.android.view.ViewObservable;
-import rx.schedulers.Schedulers;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
-import static rx.android.internal.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SoAdapter extends RecyclerView.Adapter<SoAdapter.ViewHolder> {
 
@@ -97,7 +99,7 @@ public class SoAdapter extends RecyclerView.Adapter<SoAdapter.ViewHolder> {
 
         private Observable<Bitmap> loadBitmap(String url) {
             return Observable
-                    .create(subscriber -> {
+                    .create((ObservableEmitter<Bitmap> subscriber) -> {
                         ImageLoader.getInstance().displayImage(url, city_image, new ImageLoadingListener() {
                             @Override
                             public void onLoadingStarted(String imageUri, View view) {
@@ -112,7 +114,7 @@ public class SoAdapter extends RecyclerView.Adapter<SoAdapter.ViewHolder> {
                             @Override
                             public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
                                 subscriber.onNext(loadedImage);
-                                subscriber.onCompleted();
+                                subscriber.onComplete();
                             }
 
                             @Override
@@ -130,19 +132,24 @@ public class SoAdapter extends RecyclerView.Adapter<SoAdapter.ViewHolder> {
 
             ImageLoader.getInstance().displayImage(user.getProfileImage(), user_image);
 
-            displayWeatherInfos(user);
+            // We can't get weather infomation from open weather map.
+            // Because from Oct. 2015, it request a valid APPID.
+            //displayWeatherInfos(user);
 
-            ViewObservable.clicks(mView)
-                    .subscribe(onClickEvent -> {
-                        checkNotNull(mProfileListener, "Must implement OpenProfileListener");
+            // ViewObservable does not exist in both rxandroid 1.x and rxandroid 2.x
+            //ViewObservable.clicks(mView)
+            //...
 
-                        String url = user.getWebsiteUrl();
-                        if (url != null && !url.equals("") && !url.contains("search")) {
-                            mProfileListener.open(url);
-                        } else {
-                            mProfileListener.open(user.getLink());
-                        }
-                    });
+            mView.setOnClickListener(view -> {
+                    checkNotNull(mProfileListener, "Must implement OpenProfileListener");
+
+                    String url = user.getWebsiteUrl();
+                    if (url != null && !url.equals("") && !url.contains("search")) {
+                        mProfileListener.open(url);
+                    } else {
+                        mProfileListener.open(user.getLink());
+                    }
+            });
         }
 
         private void displayWeatherInfos(User user) {
@@ -163,8 +170,11 @@ public class SoAdapter extends RecyclerView.Adapter<SoAdapter.ViewHolder> {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Observer<Bitmap>() {
                             @Override
-                            public void onCompleted() {
+                            public void onSubscribe(Disposable d) {
+                            }
 
+                            @Override
+                            public void onComplete() {
                             }
 
                             @Override

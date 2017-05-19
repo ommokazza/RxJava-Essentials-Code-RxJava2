@@ -2,11 +2,13 @@ package com.packtpub.apps.rxjava_essentials.chapter8.api.openweathermap;
 
 import com.packtpub.apps.rxjava_essentials.chapter8.api.openweathermap.models.WeatherResponse;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import lombok.Getter;
-import retrofit.RestAdapter;
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class OpenWeatherMapApiManager {
 
@@ -16,18 +18,18 @@ public class OpenWeatherMapApiManager {
     private final OpenWeatherMapService mOpenWeatherMapService;
 
     private OpenWeatherMapApiManager() {
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint("http://api.openweathermap.org")
-                .setLogLevel(RestAdapter.LogLevel.BASIC)
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://api.openweathermap.org")
+                .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        mOpenWeatherMapService = restAdapter.create(OpenWeatherMapService.class);
+        mOpenWeatherMapService = retrofit.create(OpenWeatherMapService.class);
     }
 
     public Observable<WeatherResponse> getForecastByCity(String city) {
-        return mOpenWeatherMapService
-                .getForecastByCity(city)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+        return Observable.create((ObservableOnSubscribe<WeatherResponse>) e -> {
+            e.onNext(mOpenWeatherMapService.getForecastByCity(city).execute().body());
+            e.onComplete();
+        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
     }
 }

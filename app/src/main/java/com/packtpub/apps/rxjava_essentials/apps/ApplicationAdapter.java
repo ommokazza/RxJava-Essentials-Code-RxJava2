@@ -13,9 +13,9 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.ViewHolder> {
 
@@ -66,7 +66,7 @@ public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.
     private Observable<Bitmap> getBitmap(String icon) {
         return Observable.create(subscriber -> {
             subscriber.onNext(BitmapFactory.decodeFile(icon));
-            subscriber.onCompleted();
+            subscriber.onComplete();
         });
     }
 
